@@ -1,0 +1,2 @@
+thx=GOROOT=$(tinygo info pico|grep GOROOT|awk '{print $3}') hx
+tflash=tinygo flash -target=pico
