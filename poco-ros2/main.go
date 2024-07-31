@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"tinygo.org/x/drivers/l9110x"
+	"tinygo.org/x/drivers/ssd1306"
 )
 
 type msg struct {
@@ -22,6 +23,21 @@ type motors struct {
 }
 
 var freq uint64 = 1e9 / 1000
+
+func initDisplay() ssd1306.Device {
+	// oled diplay on GP4 and GP5
+	machine.I2C0.Configure(machine.I2CConfig{
+		Frequency: 400 * machine.KHz,
+	})
+
+	display := ssd1306.NewI2C(machine.I2C0)
+	display.Configure(ssd1306.Config{
+		Address: 0x3C,
+		Width:   128,
+		Height:  64,
+	})
+	return display
+}
 
 func initMotors() motors {
 
@@ -232,13 +248,9 @@ func handleComms(uart machine.UART) {
 
 func main() {
 	fmt.Println("Ready")
-	// test := initMotors()
-	// test.mot1.Configure()
-	// test.mot1.Forward()
-	// test.mot2.Configure()
-	// test.mot2.Forward()
-
 	uart := initUart()
+	display := initDisplay()
+
 	go handleComms(uart)
 	for {
 		fmt.Print(".")
