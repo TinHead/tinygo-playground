@@ -15,51 +15,88 @@ type msg struct {
 }
 
 type motors struct {
-	mot1 l9110x.Device
-	mot2 l9110x.Device
-	// mot3 l9110x.PWMDevice
-	// mot4 l9110x.PWMDevice
+	mot1 l9110x.PWMDevice
+	mot2 l9110x.PWMDevice
+	mot3 l9110x.PWMDevice
+	mot4 l9110x.PWMDevice
 }
 
 var freq uint64 = 1e9 / 1000
 
 func initMotors() motors {
-	m1 := machine.GP16
-	m2 := machine.GP17
-	m3 := machine.GP18
-	m4 := machine.GP19
+
+	m1 := machine.GP12
+	m2 := machine.GP13
+	m3 := machine.GP14
+	m4 := machine.GP15
+	m5 := machine.GP16
+	m6 := machine.GP17
+	m7 := machine.GP18
+	m8 := machine.GP19
 
 	m1.Configure(machine.PinConfig{Mode: machine.PinOutput})
 	m2.Configure(machine.PinConfig{Mode: machine.PinOutput})
 	m3.Configure(machine.PinConfig{Mode: machine.PinOutput})
 	m4.Configure(machine.PinConfig{Mode: machine.PinOutput})
+	m5.Configure(machine.PinConfig{Mode: machine.PinOutput})
+	m6.Configure(machine.PinConfig{Mode: machine.PinOutput})
+	m7.Configure(machine.PinConfig{Mode: machine.PinOutput})
+	m8.Configure(machine.PinConfig{Mode: machine.PinOutput})
 
-	// err := machine.PWM6.Configure(machine.PWMConfig{Period: freq})
-	// if err != nil {
-	// 	println(err)
-	// }
-	// err = machine.PWM7.Configure(machine.PWMConfig{})
-	// if err != nil {
-	// 	println(err)
-	// }
-	// ch1, err := machine.PWM6.Channel(m1)
-	// if err != nil {
-	// 	println(err)
-	// }
-	// ch2, err := machine.PWM6.Channel(m2)
-	// if err != nil {
-	// 	println(err)
-	// }
-	// ch3, err := machine.PWM7.Channel(m3)
-	// if err != nil {
-	// 	println(err)
-	// }
-	// ch4, err := machine.PWM7.Channel(m4)
-	// if err != nil {
-	// 	println(err)
-	// }
+	err := machine.PWM6.Configure(machine.PWMConfig{Period: freq})
+	if err != nil {
+		println(err)
+	}
+	err = machine.PWM7.Configure(machine.PWMConfig{Period: freq})
+	if err != nil {
+		println(err)
+	}
+	err = machine.PWM0.Configure(machine.PWMConfig{Period: freq})
+	if err != nil {
+		println(err)
+	}
+	err = machine.PWM1.Configure(machine.PWMConfig{Period: freq})
+	if err != nil {
+		println(err)
+	}
 
-	return motors{mot1: l9110x.New(m1, m2), mot2: l9110x.New(m3, m4)}
+	ch1, err := machine.PWM6.Channel(m1)
+	if err != nil {
+		println(err)
+	}
+	ch2, err := machine.PWM6.Channel(m2)
+	if err != nil {
+		println(err)
+	}
+	ch3, err := machine.PWM7.Channel(m3)
+	if err != nil {
+		println(err)
+	}
+	ch4, err := machine.PWM7.Channel(m4)
+	if err != nil {
+		println(err)
+	}
+	ch5, err := machine.PWM0.Channel(m5)
+	if err != nil {
+		println(err)
+	}
+	ch6, err := machine.PWM0.Channel(m6)
+	if err != nil {
+		println(err)
+	}
+	ch7, err := machine.PWM1.Channel(m7)
+	if err != nil {
+		println(err)
+	}
+	ch8, err := machine.PWM1.Channel(m8)
+	if err != nil {
+		println(err)
+	}
+
+	return motors{mot1: l9110x.NewWithSpeed(ch1, ch2, machine.PWM6),
+		mot2: l9110x.NewWithSpeed(ch3, ch4, machine.PWM7),
+		mot3: l9110x.NewWithSpeed(ch5, ch6, machine.PWM0),
+		mot4: l9110x.NewWithSpeed(ch7, ch8, machine.PWM1)}
 
 }
 
@@ -77,20 +114,47 @@ func handleMotors(packet []byte) error {
 		case 102:
 			// forward
 			fmt.Println("Got fw command!")
-			drive.mot1.Forward()
-			drive.mot2.Forward()
+			drive.mot1.Forward(uint32(packet[2]))
+			drive.mot2.Forward(uint32(packet[2]))
+			drive.mot3.Forward(uint32(packet[2]))
+			drive.mot4.Forward(uint32(packet[2]))
 		case 98:
 			// backward
-			drive.mot1.Backward()
-			drive.mot2.Backward()
+			fmt.Println("Got bw command!")
+			drive.mot1.Backward(uint32(packet[2]))
+			drive.mot2.Backward(uint32(packet[2]))
+			drive.mot3.Backward(uint32(packet[2]))
+			drive.mot4.Backward(uint32(packet[2]))
 		case 115:
 			//stop
 			drive.mot1.Stop()
 			drive.mot2.Stop()
+			drive.mot3.Stop()
+			drive.mot4.Stop()
 		case 108:
-			//left
-		case 114:
 			//right
+			drive.mot1.Forward(uint32(packet[2]))
+			drive.mot2.Backward(uint32(packet[2]))
+			drive.mot3.Backward(uint32(packet[2]))
+			drive.mot4.Forward(uint32(packet[2]))
+		case 114:
+			//left
+			drive.mot1.Backward(uint32(packet[2]))
+			drive.mot2.Forward(uint32(packet[2]))
+			drive.mot3.Forward(uint32(packet[2]))
+			drive.mot4.Backward(uint32(packet[2]))
+		case 97:
+			//turn right
+			drive.mot1.Forward(uint32(packet[2]))
+			drive.mot2.Forward(uint32(packet[2]))
+			drive.mot3.Backward(uint32(packet[2]))
+			drive.mot4.Backward(uint32(packet[2]))
+		case 100:
+			//turn left
+			drive.mot1.Backward(uint32(packet[2]))
+			drive.mot2.Backward(uint32(packet[2]))
+			drive.mot3.Forward(uint32(packet[2]))
+			drive.mot4.Forward(uint32(packet[2]))
 		default:
 			return errors.New("Wrong motor packet format:" + string(packet))
 
