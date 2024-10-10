@@ -24,7 +24,7 @@ func main() {
 	logger := cfg.Logger
 	if logger == nil {
 		logger = slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
-			Level: slog.Level(0), // Make temporary logger that does no logging.
+			Level: slog.Level(-4), // Make temporary logger that does no logging.
 		}))
 	}
 	if err != nil {
